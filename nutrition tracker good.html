@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elisa · Daily Nutrition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0c0e;
+    --surface: #141416;
+    --surface2: #1c1c1f;
+    --border: #252528;
+    --border2: #303035;
+    --accent: #b8f566;
+    --accent-dim: rgba(184,245,102,0.1);
+    --blue: #7eb8f7;
+    --blue-dim: rgba(126,184,247,0.1);
+    --amber: #f7c97e;
+    --amber-dim: rgba(247,201,126,0.1);
+    --red: #f77e7e;
+    --red-dim: rgba(247,126,126,0.1);
+    --cyan: #7ef7e8;
+    --cyan-dim: rgba(126,247,232,0.1);
+    --text: #e2e2e6;
+    --muted: #5a5a62;
+    --label: #888890;
+    --radius: 10px;
+    --hydration-target: 2500;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 20px 14px 60px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .hdr {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .hdr-left { flex: 1; }
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.15;
+  }
+  .hdr-nav { display: flex; gap: 6px; margin-top: 4px; }
+  .nav-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--label);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .nav-btn:hover, .nav-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Date strip ── */
+  .date-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .date-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--label);
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .date-btn:hover { border-color: var(--border2); color: var(--text); }
+  .date-display {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    text-align: center;
+  }
+
+  /* ── Macro summary ── */
+  .macro-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .macro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px 10px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .macro-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .mc-kcal::after { background: var(--accent); }
+  .mc-p::after    { background: var(--blue); }
+  .mc-c::after    { background: var(--amber); }
+  .mc-f::after    { background: var(--red); }
+  .mc-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .mc-kcal .mc-val { color: var(--accent); }
+  .mc-p .mc-val    { color: var(--blue); }
+  .mc-c .mc-val    { color: var(--amber); }
+  .mc-f .mc-val    { color: var(--red); }
+  .mc-unit { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .mc-lbl  { font-size: 9px; color: var(--label); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ── Deficit bar ── */
+  .deficit-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .deficit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .deficit-label {
+    font-size: 11px;
+    color: var(--label);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .deficit-val { font-family: 'DM Mono', monospace; font-size: 14px; }
+  .deficit-bar-track {
+    background: var(--border);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .deficit-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--blue), var(--accent));
+    transition: width 0.6s ease;
+  }
+  .deficit-meta { display: flex; justify-content: space-between; }
+  .deficit-meta span {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Hydration card ── */
+  .hydration-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 6px;
+  }
+  .hydration-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .hydration-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .hydration-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--cyan);
+  }
+  .hydration-amount span { color: var(--muted); font-size: 10px; }
+
+  /* Wave fill bar */
+  .hydration-bar-track {
+    background: var(--border);
+    border-radius: 6px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .hydration-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #3bb8d4, var(--cyan));
+    transition: width 0.5s ease;
+    position: relative;
+  }
+  .hydration-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* Quick-add buttons */
+  .hydration-btns {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .h-btn {
+    background: var(--cyan-dim);
+    border: 1px solid rgba(126,247,232,0.2);
+    color: var(--cyan);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .h-btn:hover { background: rgba(126,247,232,0.18); border-color: var(--cyan); }
+  .h-btn.h-undo {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .h-btn.h-undo:hover { color: var(--red); border-color: var(--red); }
+
+  .hydration-status {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-top: 8px;
+  }
+
+  /* ── Section title ── */
+  .sec {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 18px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sec::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Food items ── */
+  .food-list { display: flex; flex-direction: column; gap: 5px; }
+  .food-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .fi-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .fi-portion { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .fi-pills { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; flex-shrink: 0; max-width: 130px; }
+  .pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .pk { background: var(--accent-dim); color: var(--accent); }
+  .pp { background: var(--blue-dim);   color: var(--blue); }
+  .pc { background: var(--amber-dim);  color: var(--amber); }
+  .pf { background: var(--red-dim);    color: var(--red); }
+
+  /* ── AI insight ── */
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--label);
+    line-height: 1.65;
+    min-height: 60px;
+  }
+  .insight-card strong { color: var(--accent); font-weight: 500; }
+
+  /* ── Input area ── */
+  .input-area {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .input-top { padding: 10px 12px 0; }
+  .input-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 12px 10px;
+    margin-top: 8px;
+  }
+  .whoop-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .whoop-label {
+    font-size: 11px;
+    color: var(--label);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+  .whoop-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .whoop-input:focus { border-color: var(--accent); }
+  .whoop-input::placeholder { color: var(--muted); }
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    resize: none;
+    outline: none;
+    min-height: 90px;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); font-size: 12px; }
+  .submit-btn {
+    background: var(--accent);
+    color: #0c0c0e;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ── History view ── */
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .history-item:hover { border-color: var(--border2); }
+  .hi-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--label); margin-bottom: 6px; }
+  .hi-macros { display: flex; gap: 10px; flex-wrap: wrap; }
+  .hi-macro { font-family: 'DM Mono', monospace; font-size: 11px; }
+  .hi-hydration {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hi-hydration-bar {
+    flex: 1;
+    background: var(--border);
+    border-radius: 3px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .hi-hydration-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #3bb8d4, var(--cyan));
+  }
+
+  /* ── Loading ── */
+  .loader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 8px 0;
+    font-family: 'DM Mono', monospace;
+  }
+  .loader-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    line-height: 1.8;
+  }
+
+  /* ── Image upload ── */
+  .img-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .img-upload-btn {
+    background: var(--surface2);
+    border: 1px dashed var(--border2);
+    color: var(--label);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .img-upload-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #imageFileInput { display: none; }
+
+  .img-previews {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 0 12px 8px;
+  }
+
+  .img-preview-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    animation: fadeIn 0.2s ease;
+  }
+
+  .img-preview-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .img-remove {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(0,0,0,0.7);
+    color: var(--red);
+    border: none;
+    border-radius: 50%;
+    width: 16px; height: 16px;
+    font-size: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .macro-split {
+    display: flex;
+    gap: 2px;
+    height: 4px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="eyebrow">Elisa · Nutrition</div>
+    <h1 id="pageTitle">Today</h1>
+  </div>
+  <div class="hdr-nav">
+    <button class="nav-btn active" onclick="showView('log')">Log</button>
+    <button class="nav-btn" onclick="showView('history')">History</button>
+  </div>
+</div>
+
+<!-- LOG VIEW -->
+<div id="logView">
+
+  <div class="date-strip">
+    <button class="date-btn" onclick="changeDate(-1)">‹</button>
+    <div class="date-display" id="dateDisplay">—</div>
+    <button class="date-btn" onclick="changeDate(1)">›</button>
+  </div>
+
+  <!-- Macro summary -->
+  <div class="macro-grid">
+    <div class="macro-card mc-kcal">
+      <div class="mc-val" id="sumKcal">—</div>
+      <div class="mc-unit">kcal</div>
+      <div class="mc-lbl">In</div>
+    </div>
+    <div class="macro-card mc-p">
+      <div class="mc-val" id="sumProt">—</div>
+      <div class="mc-unit">g</div>
+      <div class="mc-lbl">Protein</div>
+    </div>
+    <div class="macro-card mc-c">
+      <div class="mc-val" id="sumCarb">—</div>
+      <div class="mc-unit">g</div>
+      <div class="mc-lbl">Carbs</div>
+    </div>
+    <div class="macro-card mc-f">
+      <div class="mc-val" id="sumFat">—</div>
+      <div class="mc-unit">g</div>
+      <div class="mc-lbl">Fat</div>
+    </div>
+  </div>
+
+  <!-- Deficit -->
+  <div class="deficit-card" id="deficitCard" style="display:none">
+    <div class="deficit-row">
+      <span class="deficit-label">Deficit</span>
+      <span class="deficit-val" id="deficitVal">—</span>
+    </div>
+    <div class="deficit-bar-track">
+      <div class="deficit-bar-fill" id="deficitBar" style="width:0%"></div>
+    </div>
+    <div class="deficit-meta">
+      <span id="deficitIn">Consumed: —</span>
+      <span id="deficitBurn">Burned: —</span>
+    </div>
+  </div>
+
+  <!-- Hydration -->
+  <div class="sec">Hydration</div>
+  <div class="hydration-card">
+    <div class="hydration-top">
+      <span class="hydration-title">💧 Water intake</span>
+      <span class="hydration-amount" id="hydrationAmount">0 ml <span>/ 2500 ml</span></span>
+    </div>
+    <div class="hydration-bar-track">
+      <div class="hydration-bar-fill" id="hydrationBar" style="width:0%"></div>
+    </div>
+    <div class="hydration-btns">
+      <button class="h-btn" onclick="addWater(150)">+150 ml</button>
+      <button class="h-btn" onclick="addWater(250)">+250 ml</button>
+      <button class="h-btn" onclick="addWater(330)">+330 ml</button>
+      <button class="h-btn" onclick="addWater(500)">+500 ml</button>
+      <button class="h-btn h-undo" onclick="undoWater()">undo</button>
+    </div>
+    <div class="hydration-status" id="hydrationStatus">Tap to log water</div>
+  </div>
+
+  <!-- Food list -->
+  <div class="sec">What you ate</div>
+  <div class="food-list" id="foodList">
+    <div class="empty-state">No food logged yet.<br>Describe your day below ↓</div>
+  </div>
+
+  <!-- Insight -->
+  <div class="insight-card" id="insightCard" style="display:none"></div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <div class="input-top">
+      <textarea id="foodInput" placeholder="Describe what you ate — or just upload photos of labels/meals below and I'll read them for you."></textarea>
+    </div>
+    <!-- Image previews -->
+    <div class="img-previews" id="imgPreviews"></div>
+    <!-- Image upload row -->
+    <div class="img-upload-row">
+      <label class="img-upload-btn" for="imageFileInput">
+        📷 Add photo
+      </label>
+      <input type="file" id="imageFileInput" accept="image/*" multiple onchange="handleImageUpload(event)" />
+      <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;">labels · meals · snacks</span>
+    </div>
+    <div class="whoop-row">
+      <span class="whoop-label">WHOOP burned</span>
+      <input class="whoop-input" id="whoopInput" type="number" placeholder="e.g. 1650" />
+    </div>
+    <div class="input-row">
+      <button class="submit-btn" id="submitBtn" onclick="analyseDay()">Analyse →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- HISTORY VIEW -->
+<div id="historyView" style="display:none">
+  <div class="sec">Past days</div>
+  <div class="history-list" id="historyList">
+    <div class="empty-state">No history yet.<br>Log your first day to see it here.</div>
+  </div>
+</div>
+
+<script>
+const HYDRATION_TARGET = 2500; // ml
+
+let currentDate = new Date();
+currentDate.setHours(12,0,0,0); // noon avoids timezone midnight-flip issues
+let activeView = 'log';
+// Hydration log: array of ml additions for undo support
+let hydrationLog = [];
+
+function dateKey(d) {
+  // Use local date parts to avoid UTC timezone shift
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function friendlyDate(d) {
+  const today = new Date(); today.setHours(12,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  const dKey = dateKey(d);
+  if (dKey === dateKey(today)) return 'Today';
+  if (dKey === dateKey(yesterday)) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+// ── Storage helpers ──
+async function saveDay(key, data) {
+  try { await window.storage.set('day:' + key, JSON.stringify(data)); } catch(e) {}
+}
+async function loadDay(key) {
+  try {
+    const r = await window.storage.get('day:' + key);
+    return r ? JSON.parse(r.value) : null;
+  } catch(e) { return null; }
+}
+async function listDays() {
+  try {
+    const r = await window.storage.list('day:');
+    return r ? r.keys : [];
+  } catch(e) { return []; }
+}
+
+// ── Hydration helpers ──
+function hydrationTotal() {
+  return hydrationLog.reduce((a, b) => a + b, 0);
+}
+
+function hydrationStatusText(ml) {
+  const pct = ml / HYDRATION_TARGET;
+  const remaining = Math.max(0, HYDRATION_TARGET - ml);
+  if (ml === 0) return 'Tap to log water';
+  if (pct < 0.4) return `⚠️ Low — ${remaining} ml to go`;
+  if (pct < 0.7) return `Getting there — ${remaining} ml remaining`;
+  if (pct < 1.0) return `Almost there — just ${remaining} ml left 💪`;
+  return `✅ Target hit! ${ml} ml today`;
+}
+
+function renderHydration() {
+  const ml = hydrationTotal();
+  const pct = Math.min(100, Math.round((ml / HYDRATION_TARGET) * 100));
+  const litres = (ml / 1000).toFixed(2).replace(/\.?0+$/, '');
+  document.getElementById('hydrationAmount').innerHTML =
+    `${ml < 1000 ? ml + ' ml' : litres + ' L'} <span>/ 2.5 L</span>`;
+  document.getElementById('hydrationBar').style.width = pct + '%';
+  document.getElementById('hydrationStatus').textContent = hydrationStatusText(ml);
+}
+
+async function addWater(ml) {
+  hydrationLog.push(ml);
+  renderHydration();
+  await persistHydration();
+}
+
+async function undoWater() {
+  if (hydrationLog.length === 0) return;
+  hydrationLog.pop();
+  renderHydration();
+  await persistHydration();
+}
+
+async function persistHydration() {
+  const key = dateKey(currentDate);
+  const existing = await loadDay(key) || {};
+  existing.hydrationLog = hydrationLog;
+  await saveDay(key, existing);
+}
+
+// ── View switching ──
+function showView(v) {
+  activeView = v;
+  document.getElementById('logView').style.display = v === 'log' ? 'block' : 'none';
+  document.getElementById('historyView').style.display = v === 'history' ? 'block' : 'none';
+  document.querySelectorAll('.nav-btn').forEach((b,i) =>
+    b.classList.toggle('active', (i===0 && v==='log') || (i===1 && v==='history')));
+  if (v === 'history') renderHistory();
+}
+
+// ── Date navigation ──
+function changeDate(delta) {
+  const d = new Date(currentDate);
+  d.setDate(d.getDate() + delta);
+  d.setHours(12,0,0,0);
+  currentDate = d;
+  renderDateDisplay();
+  loadAndRender();
+}
+
+function renderDateDisplay() {
+  const dateStr = currentDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const el = document.getElementById('dateDisplay');
+  const title = document.getElementById('pageTitle');
+  if (el) el.textContent = dateStr;
+  if (title) title.textContent = friendlyDate(currentDate);
+}
+
+// ── Render a day's data ──
+function renderDay(data) {
+  // Hydration
+  hydrationLog = (data && data.hydrationLog) ? data.hydrationLog : [];
+  renderHydration();
+
+  if (!data) {
+    document.getElementById('sumKcal').textContent = '—';
+    document.getElementById('sumProt').textContent = '—';
+    document.getElementById('sumCarb').textContent = '—';
+    document.getElementById('sumFat').textContent = '—';
+    document.getElementById('deficitCard').style.display = 'none';
+    document.getElementById('foodList').innerHTML = '<div class="empty-state">No food logged yet.<br>Describe your day below ↓</div>';
+    document.getElementById('insightCard').style.display = 'none';
+    return;
+  }
+
+  const { totals, foods, whoopBurn, insight } = data;
+
+  if (totals) {
+    document.getElementById('sumKcal').textContent = Math.round(totals.kcal);
+    document.getElementById('sumProt').textContent = Math.round(totals.protein);
+    document.getElementById('sumCarb').textContent = Math.round(totals.carbs);
+    document.getElementById('sumFat').textContent = Math.round(totals.fat);
+  }
+
+  if (whoopBurn) {
+    const deficit = whoopBurn - totals.kcal;
+    const pct = Math.min(100, Math.round((totals.kcal / whoopBurn) * 100));
+    document.getElementById('deficitCard').style.display = 'block';
+    document.getElementById('deficitVal').textContent = (deficit > 0 ? '−' : '+') + Math.abs(deficit) + ' kcal';
+    document.getElementById('deficitVal').style.color = deficit > 0 ? 'var(--accent)' : 'var(--red)';
+    document.getElementById('deficitBar').style.width = pct + '%';
+    document.getElementById('deficitIn').textContent = 'Consumed: ' + Math.round(totals.kcal) + ' kcal';
+    document.getElementById('deficitBurn').textContent = 'Burned: ' + whoopBurn + ' kcal';
+  } else {
+    document.getElementById('deficitCard').style.display = 'none';
+  }
+
+  const fl = document.getElementById('foodList');
+  if (!foods || foods.length === 0) {
+    fl.innerHTML = '<div class="empty-state">No items parsed.</div>';
+  } else {
+    fl.innerHTML = foods.map(f => `
+      <div class="food-item">
+        <div>
+          <div class="fi-name">${f.emoji || '🍽'} ${f.name}</div>
+          <div class="fi-portion">${f.portion || ''}</div>
+        </div>
+        <div class="fi-pills">
+          <span class="pill pk">${Math.round(f.kcal)} kcal</span>
+          ${f.protein > 0 ? `<span class="pill pp">${Math.round(f.protein)}g P</span>` : ''}
+          ${f.carbs > 0 ? `<span class="pill pc">${Math.round(f.carbs)}g C</span>` : ''}
+          ${f.fat > 0 ? `<span class="pill pf">${Math.round(f.fat)}g F</span>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (insight) {
+    document.getElementById('insightCard').style.display = 'block';
+    document.getElementById('insightCard').innerHTML = insight;
+  } else {
+    document.getElementById('insightCard').style.display = 'none';
+  }
+}
+
+// ── Load and render current date ──
+async function loadAndRender() {
+  const data = await loadDay(dateKey(currentDate));
+  renderDay(data);
+}
+
+// ── History ──
+async function renderHistory() {
+  const keys = await listDays();
+  const hl = document.getElementById('historyList');
+  if (keys.length === 0) {
+    hl.innerHTML = '<div class="empty-state">No history yet.<br>Log your first day to see it here.</div>';
+    return;
+  }
+  const days = [];
+  for (const k of keys) {
+    try {
+      const r = await window.storage.get(k);
+      if (r) days.push({ key: k.replace('day:', ''), data: JSON.parse(r.value) });
+    } catch(e) {}
+  }
+  days.sort((a, b) => b.key.localeCompare(a.key));
+
+  hl.innerHTML = days.map(({ key, data }) => {
+    const d = new Date(key + 'T00:00:00');
+    const label = friendlyDate(d);
+    const t = data.totals || {};
+    const totalMacroKcal = ((t.protein||0) * 4) + ((t.carbs||0) * 4) + ((t.fat||0) * 9);
+    const pPct = totalMacroKcal ? Math.round((t.protein * 4 / totalMacroKcal) * 100) : 33;
+    const cPct = totalMacroKcal ? Math.round((t.carbs * 4 / totalMacroKcal) * 100) : 33;
+    const fPct = 100 - pPct - cPct;
+    const deficit = (data.whoopBurn && t.kcal) ? data.whoopBurn - t.kcal : null;
+    const hml = data.hydrationLog ? data.hydrationLog.reduce((a,b)=>a+b,0) : 0;
+    const hPct = Math.min(100, Math.round((hml / HYDRATION_TARGET) * 100));
+    const hColour = hPct >= 100 ? 'var(--cyan)' : hPct >= 60 ? 'var(--amber)' : 'var(--red)';
+    const hLabel = hml === 0 ? '—' : hml < 1000 ? hml + 'ml' : (hml/1000).toFixed(1) + 'L';
+    return `
+      <div class="history-item" onclick="jumpToDate('${key}')">
+        <div class="hi-date">${label} · ${key}</div>
+        <div class="hi-macros">
+          ${t.kcal ? `<span class="hi-macro" style="color:var(--accent)">${Math.round(t.kcal)} kcal</span>` : ''}
+          ${t.protein ? `<span class="hi-macro" style="color:var(--blue)">${Math.round(t.protein)}g P</span>` : ''}
+          ${t.carbs ? `<span class="hi-macro" style="color:var(--amber)">${Math.round(t.carbs)}g C</span>` : ''}
+          ${t.fat ? `<span class="hi-macro" style="color:var(--red)">${Math.round(t.fat)}g F</span>` : ''}
+          ${deficit !== null ? `<span class="hi-macro" style="color:var(--muted)">${deficit > 0 ? '−' : '+'}${Math.abs(deficit)} def</span>` : ''}
+        </div>
+        ${totalMacroKcal ? `<div class="macro-split">
+          <div style="flex:${pPct};background:var(--blue);"></div>
+          <div style="flex:${cPct};background:var(--amber);"></div>
+          <div style="flex:${fPct};background:var(--red);"></div>
+        </div>` : ''}
+        <div class="hi-hydration">
+          <span style="color:${hColour}">💧 ${hLabel}</span>
+          <div class="hi-hydration-bar">
+            <div class="hi-hydration-fill" style="width:${hPct}%;background:${hColour};"></div>
+          </div>
+          <span style="color:var(--muted)">${hPct}%</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function jumpToDate(key) {
+  currentDate = new Date(key + 'T12:00:00');
+  renderDateDisplay();
+  showView('log');
+  loadAndRender();
+}
+
+// ── Image handling ──
+let uploadedImages = []; // [{base64, mediaType, name}]
+
+function compressImage(file, maxWidth, quality) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl.split(',')[1]);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageUpload(event) {
+  const files = Array.from(event.target.files);
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) continue;
+    // Compress to max 800px wide at 0.7 quality — keeps labels readable, reduces size ~90%
+    const base64 = await compressImage(file, 800, 0.7);
+    uploadedImages.push({ base64, mediaType: 'image/jpeg', name: file.name });
+    renderImagePreviews();
+  }
+  event.target.value = '';
+}
+
+function renderImagePreviews() {
+  const container = document.getElementById('imgPreviews');
+  if (uploadedImages.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = uploadedImages.map((img, i) => `
+    <div class="img-preview-wrap">
+      <img src="data:${img.mediaType};base64,${img.base64}" alt="${img.name}" />
+      <button class="img-remove" onclick="removeImage(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeImage(index) {
+  uploadedImages.splice(index, 1);
+  renderImagePreviews();
+}
+
+// ── AI Analysis ──
+async function analyseDay() {
+  const input = document.getElementById('foodInput').value.trim();
+  const whoopRaw = document.getElementById('whoopInput').value.trim();
+  if (!input && uploadedImages.length === 0) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  document.getElementById('foodList').innerHTML = `
+    <div class="loader">
+      <div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div>
+      <span>${uploadedImages.length > 0 ? 'Reading photos...' : 'Calculating...'}</span>
+    </div>`;
+  document.getElementById('insightCard').style.display = 'none';
+
+  const whoopBurn = whoopRaw ? parseInt(whoopRaw) : null;
+  const whoopLine = whoopBurn ? `\nWHOOP calories burned today: ${whoopBurn} kcal` : '';
+
+  const systemPrompt = `You are a precise sports nutrition assistant for Elisa, a competitive HYROX athlete (40-49 Pro) who also runs marathons. She trains hard and tracks macros carefully. She uses WHOOP for calorie burn data.
+
+Analyse the food she ate — including reading any nutrition labels or food photos provided — and return ONLY valid JSON, no markdown, no explanation.
+
+Return this exact structure:
+{
+  "foods": [
+    {
+      "name": "Food name",
+      "emoji": "🍳",
+      "portion": "quantity / weight",
+      "kcal": 123,
+      "protein": 12,
+      "carbs": 8,
+      "fat": 4
+    }
+  ],
+  "totals": {
+    "kcal": 1460,
+    "protein": 114,
+    "carbs": 113,
+    "fat": 61
+  },
+  "insight": "<strong>Protein: strong 💪</strong> ... HTML string with observations. Use <br><br> between points. Highlight wins and one actionable flag. Keep it under 80 words. Use <strong> tags for emphasis."
+}
+
+If photos of nutrition labels are provided, read them carefully and use the exact values. If a meal photo is provided, estimate portions visually. Be specific — this is for a serious athlete.`;
+
+  // Build message content — text + any images
+  const userContent = [];
+
+  if (input) {
+    userContent.push({ type: 'text', text: `Here is what Elisa ate today:${whoopLine}\n\n${input}` });
+  } else {
+    userContent.push({ type: 'text', text: `Here is what Elisa ate today:${whoopLine}\n\nPlease analyse the food shown in the attached photos.` });
+  }
+
+  uploadedImages.forEach(img => {
+    userContent.push({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType, data: img.base64 }
+    });
+  });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userContent }]
+      })
+    });
+
+    const raw = await response.json();
+    const text = raw.content.map(b => b.text || '').join('').replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
+
+    // Merge with existing day data (preserve hydration)
+    const existing = await loadDay(dateKey(currentDate)) || {};
+    const dayData = {
+      ...existing,
+      totals: parsed.totals,
+      foods: parsed.foods,
+      insight: parsed.insight,
+      whoopBurn: whoopBurn,
+      rawInput: input,
+      savedAt: new Date().toISOString()
+    };
+
+    await saveDay(dateKey(currentDate), dayData);
+    renderDay(dayData);
+
+    document.getElementById('foodInput').value = '';
+    document.getElementById('whoopInput').value = '';
+    uploadedImages = [];
+    renderImagePreviews();
+
+  } catch(e) {
+    document.getElementById('foodList').innerHTML = '<div class="empty-state">Something went wrong. Try again.</div>';
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Analyse →';
+}
+
+// ── Init ──
+function init() {
+  const now = new Date();
+  currentDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+  renderDateDisplay();
+  loadAndRender();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
